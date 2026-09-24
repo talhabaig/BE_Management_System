@@ -8,17 +8,16 @@ async function main(): Promise<void> {
     throw new Error('Refusing to seed when NODE_ENV is production');
   }
 
+  await prisma.$connect();
   const passwordHash = await hashPassword(DEV_PASSWORD);
 
-  await prisma.$transaction([
-    prisma.notification.deleteMany(),
-    prisma.comment.deleteMany(),
-    prisma.refreshToken.deleteMany(),
-    prisma.task.deleteMany(),
-    prisma.teamMember.deleteMany(),
-    prisma.team.deleteMany(),
-    prisma.user.deleteMany(),
-  ]);
+  await prisma.notification.deleteMany();
+  await prisma.comment.deleteMany();
+  await prisma.refreshToken.deleteMany();
+  await prisma.task.deleteMany();
+  await prisma.teamMember.deleteMany();
+  await prisma.team.deleteMany();
+  await prisma.user.deleteMany();
 
   const admin = await prisma.user.create({
     data: { name: 'System Admin', email: 'admin@example.com', passwordHash, role: 'ADMIN' },
