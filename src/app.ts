@@ -20,11 +20,12 @@ export function createApp(): Express {
   }
 
   app.use((req, res, next) => {
+    const helmetOptions = { crossOriginResourcePolicy: { policy: 'cross-origin' as const } };
     if (req.path.startsWith('/api-docs')) {
-      helmet({ contentSecurityPolicy: false })(req, res, next);
+      helmet({ ...helmetOptions, contentSecurityPolicy: false })(req, res, next);
       return;
     }
-    helmet()(req, res, next);
+    helmet(helmetOptions)(req, res, next);
   });
 
   app.use(
