@@ -104,6 +104,32 @@ describe('authentication', () => {
     expect(me.body.data.email).toBe('ada@example.com');
   });
 
+  it('locks login for 15 minutes after five failed attempts', async () => {
+    await createUser({ name: 'Locked User', email: 'locked@example.com', role: 'USER' });
+
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      const failed = await request(app).post('/api/auth/login').send({
+        email: 'locked@example.com',
+        password: 'WrongPass1',
+      });
+      expect(failed.status).toBe(401);
+    }
+
+    const locked = await request(app).post('/api/auth/login').send({
+      email: 'locked@example.com',
+      password: 'WrongPass1',
+    });
+    expect(locked.status).toBe(429);
+    expect(locked.body.error.code).toBe('LOGIN_LOCKED');
+    expect(locked.body.error.message).toBe('Too many failed login attempts. Please try again in 15 minutes.');
+
+    const stillLocked = await request(app).post('/api/auth/login').send({
+      email: 'locked@example.com',
+      password,
+    });
+    expect(stillLocked.status).toBe(429);
+  });
+
   it('rotates refresh tokens, detects reuse, logs out, and rejects expired access tokens', async () => {
     const user = await createUser({ name: 'Ada', email: 'ada@example.com', role: 'USER' });
     const loggedIn = await request(app).post('/api/auth/login').send({ email: user.email, password });

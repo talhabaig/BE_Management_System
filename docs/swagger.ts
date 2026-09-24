@@ -182,7 +182,6 @@ export const swaggerSpec = {
           '201': jsonResponse('User created', successData(userSchema)),
           '409': standardErrors['409'],
           '422': standardErrors['422'],
-          '429': standardErrors['429'],
         },
       },
     },
@@ -211,7 +210,10 @@ export const swaggerSpec = {
           '200': jsonResponse('Authenticated', successData({ type: 'object' })),
           '401': standardErrors['401'],
           '422': standardErrors['422'],
-          '429': standardErrors['429'],
+          '429': jsonResponse(
+            'Too many failed login attempts. Locked for 15 minutes after 5 failures.',
+            errorSchema,
+          ),
         },
       },
     },
@@ -223,7 +225,6 @@ export const swaggerSpec = {
         responses: {
           '200': jsonResponse('Tokens rotated', successData({ type: 'object' })),
           '401': standardErrors['401'],
-          '429': standardErrors['429'],
         },
       },
     },

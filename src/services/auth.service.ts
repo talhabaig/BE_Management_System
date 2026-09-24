@@ -4,6 +4,7 @@ import { prisma } from '../prisma/client';
 import { AppError } from '../utils/errors';
 import { durationToMs } from '../utils/duration';
 import { hashToken, signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/jwt';
+import { assertLoginAllowed, clearLoginFailures, recordFailedLogin } from '../utils/loginLockout';
 import { hashPassword, verifyPassword } from '../utils/password';
 import { userPublicSelect } from '../utils/selectors';
 import type { LoginInput, RegisterInput } from '../validators/auth.validator';
@@ -61,6 +62,8 @@ export async function register(input: RegisterInput) {
 
 export async function login(input: LoginInput) {
   const email = input.email.trim().toLowerCase();
+  assertLoginAllowed(email);
+
   const user = await prisma.user.findUnique({
     where: { email },
     select: { ...userPublicSelect, passwordHash: true },
@@ -68,14 +71,19 @@ export async function login(input: LoginInput) {
 
   if (!user || !user.isActive) {
     await verifyPassword(input.password, await getDummyHash());
+    recordFailedLogin(email);
+    assertLoginAllowed(email);
     throw new AppError(401, 'INVALID_CREDENTIALS', 'Invalid email or password');
   }
 
   const matches = await verifyPassword(input.password, user.passwordHash);
   if (!matches) {
+    recordFailedLogin(email);
+    assertLoginAllowed(email);
     throw new AppError(401, 'INVALID_CREDENTIALS', 'Invalid email or password');
   }
 
+  clearLoginFailures(email);
   const session = await issueSession(user.id, user.role);
   return {
     accessToken: session.accessToken,

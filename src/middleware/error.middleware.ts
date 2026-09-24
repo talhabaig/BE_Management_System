@@ -19,6 +19,16 @@ export function errorHandler(error: unknown, _req: Request, res: Response, _next
     if (error.statusCode >= 500) {
       logger.error({ code: error.code, message: error.message }, 'Application error');
     }
+    if (
+      error.statusCode === 429 &&
+      error.details &&
+      typeof error.details === 'object' &&
+      error.details !== null &&
+      'retryAfterSeconds' in error.details &&
+      typeof (error.details as { retryAfterSeconds?: unknown }).retryAfterSeconds === 'number'
+    ) {
+      res.setHeader('Retry-After', String((error.details as { retryAfterSeconds: number }).retryAfterSeconds));
+    }
     res.status(error.statusCode).json({
       success: false,
       error: {

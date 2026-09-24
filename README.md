@@ -13,7 +13,7 @@ REST API for a role-based task management system. Users belong to teams, manager
 - Zod validation
 - Swagger / OpenAPI
 - Jest and Supertest
-- Helmet, CORS, and express-rate-limit
+- Helmet, CORS, and express-rate-limit (available; not enabled on routes for now)
 - Pino logging
 
 ## Architecture
@@ -26,7 +26,7 @@ src/
   controllers/           HTTP adapters
   services/              Business rules and database access
   routes/                Route registration
-  middleware/            Auth, roles, validation, errors, rate limits
+  middleware/            Auth, roles, validation, errors
   validators/            Zod schemas
   utils/                 Tokens, passwords, pagination, logging
   types/                 Shared TypeScript types
@@ -201,7 +201,7 @@ Task sorting accepts only `createdAt`, `updatedAt`, `deadline`, `priority`, `sta
 ## Security
 
 - Helmet and explicit CORS origins with credentials
-- Rate limits on the API and a tighter limit on login, register, and refresh
+- Login lockout after 5 failed attempts (15 minutes)
 - bcrypt hashes, cost 12 outside tests
 - Zod validation for body, query, and params
 - Prisma queries instead of dynamic SQL
