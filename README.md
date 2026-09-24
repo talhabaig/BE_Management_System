@@ -245,7 +245,13 @@ This API runs on Vercel as a serverless function (`api/index.ts`). It does not u
 
 `PORT` is optional on Vercel. Do not paste `.env` from your laptop into Git.
 
-4. Deploy. The `vercel-build` script runs `prisma generate` and `prisma migrate deploy`.
+4. Deploy. The `vercel-build` script runs `prisma generate`. Apply migrations from your machine when the schema changes:
+
+```bash
+npx prisma migrate deploy
+```
+
+Set every variable for **Production**, **Preview**, and **Development** in Vercel, including `DIRECT_URL`. A Preview deploy fails if those vars exist only on Production.
 5. Seed the hosted database once from your machine (seed refuses `NODE_ENV=production`):
 
 ```bash
