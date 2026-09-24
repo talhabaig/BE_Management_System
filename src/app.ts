@@ -43,6 +43,16 @@ export function createApp(): Express {
     }),
   );
 
+  app.get('/', (_req, res) => {
+    res.status(200).json({
+      success: true,
+      data: {
+        name: 'Role-Based Task Management API',
+        health: '/api/health',
+        docs: '/api-docs',
+      },
+    });
+  });
   app.get('/api-docs.json', (_req, res) => {
     res.json(swaggerSpec);
   });
