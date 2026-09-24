@@ -234,7 +234,8 @@ This API runs on Vercel as a serverless function (`api/index.ts`). It does not u
 
 | Variable | Value |
 | --- | --- |
-| `DATABASE_URL` | Neon (or other hosted Postgres) connection string with `sslmode=require`. Prefer the pooler URL. |
+| `DATABASE_URL` | Neon **pooler** URL with `sslmode=require&pgbouncer=true&connect_timeout=30` |
+| `DIRECT_URL` | Neon **direct** URL (hostname without `-pooler`) with `sslmode=require&connect_timeout=30` |
 | `NODE_ENV` | `production` |
 | `JWT_ACCESS_SECRET` | Random string, at least 32 characters |
 | `JWT_REFRESH_SECRET` | Different random string, at least 32 characters |
