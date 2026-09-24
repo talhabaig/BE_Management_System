@@ -224,6 +224,39 @@ Run the seed from the host after Postgres is reachable:
 npm run prisma:seed
 ```
 
+## Vercel deployment
+
+This API runs on Vercel as a serverless function (`api/index.ts`). It does not use `app.listen` on Vercel.
+
+1. Push the repo to GitHub and import it in Vercel as a new project.
+2. Framework Preset: Other.
+3. In Project Settings → Environment Variables, set:
+
+| Variable | Value |
+| --- | --- |
+| `DATABASE_URL` | Neon (or other hosted Postgres) connection string with `sslmode=require`. Prefer the pooler URL. |
+| `NODE_ENV` | `production` |
+| `JWT_ACCESS_SECRET` | Random string, at least 32 characters |
+| `JWT_REFRESH_SECRET` | Different random string, at least 32 characters |
+| `ACCESS_TOKEN_EXPIRES_IN` | `15m` |
+| `REFRESH_TOKEN_EXPIRES_IN` | `7d` |
+| `CORS_ORIGIN` | Your frontend origin(s), comma-separated, for example `https://your-app.vercel.app,http://localhost:5173` |
+
+`PORT` is optional on Vercel. Do not paste `.env` from your laptop into Git.
+
+4. Deploy. The `vercel-build` script runs `prisma generate` and `prisma migrate deploy`.
+5. Seed the hosted database once from your machine (seed refuses `NODE_ENV=production`):
+
+```bash
+DATABASE_URL="your-neon-url" NODE_ENV=development npm run prisma:seed
+```
+
+6. Check `https://YOUR_BACKEND.vercel.app/api/health` and `https://YOUR_BACKEND.vercel.app/api-docs`.
+
+7. Point the frontend `VITE_API_URL` at the Vercel backend URL. Keep `CORS_ORIGIN` and cookie credentials aligned; production cookies use `Secure` and `SameSite=None`.
+
+If the deploy shows `FUNCTION_INVOCATION_FAILED`, open Vercel → Deployment → Functions → Logs. Missing env vars or a bad `DATABASE_URL` are the usual causes.
+
 ## Example requests
 
 Register:
