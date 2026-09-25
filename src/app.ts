@@ -9,7 +9,6 @@ import { errorHandler } from './middleware/error.middleware';
 import { notFoundHandler } from './middleware/notFound.middleware';
 import { apiRouter } from './routes';
 import { logger } from './utils/logger';
-import swaggerUi from 'swagger-ui-express';
 
 export function createApp(): Express {
   const app = express();
@@ -20,12 +19,27 @@ export function createApp(): Express {
   }
 
   app.use((req, res, next) => {
-    const helmetOptions = { crossOriginResourcePolicy: { policy: 'cross-origin' as const } };
+    const helmetOptions = {
+      crossOriginResourcePolicy: { policy: 'cross-origin' as const },
+      contentSecurityPolicy: {
+        useDefaults: true,
+        directives: {
+          'default-src': ["'self'"],
+          'script-src': ["'self'", "'unsafe-inline'", 'https://unpkg.com'],
+          'style-src': ["'self'", "'unsafe-inline'", 'https://unpkg.com'],
+          'img-src': ["'self'", 'data:', 'https://unpkg.com'],
+          'connect-src': ["'self'"],
+          'font-src': ["'self'", 'https://unpkg.com', 'data:'],
+        },
+      },
+    };
     if (req.path.startsWith('/api-docs')) {
-      helmet({ ...helmetOptions, contentSecurityPolicy: false })(req, res, next);
+      helmet(helmetOptions)(req, res, next);
       return;
     }
-    helmet(helmetOptions)(req, res, next);
+    helmet({
+      crossOriginResourcePolicy: { policy: 'cross-origin' as const },
+    })(req, res, next);
   });
 
   app.use(
@@ -56,7 +70,34 @@ export function createApp(): Express {
   app.get('/api-docs.json', (_req, res) => {
     res.json(swaggerSpec);
   });
-  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+  app.get(['/api-docs', '/api-docs/'], (_req, res) => {
+    res.type('html').send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Role-Based Task Management API</title>
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.17.14/swagger-ui.css" />
+  <style>
+    body { margin: 0; background: #fafafa; }
+    #swagger-ui { max-width: 1460px; margin: 0 auto; }
+  </style>
+</head>
+<body>
+  <div id="swagger-ui"></div>
+  <script src="https://unpkg.com/swagger-ui-dist@5.17.14/swagger-ui-bundle.js" crossorigin></script>
+  <script>
+    window.ui = SwaggerUIBundle({
+      url: '/api-docs.json',
+      dom_id: '#swagger-ui',
+      deepLinking: true,
+      persistAuthorization: true,
+      displayRequestDuration: true,
+    });
+  </script>
+</body>
+</html>`);
+  });
   app.use('/api', apiRouter);
   app.use(notFoundHandler);
   app.use(errorHandler);
